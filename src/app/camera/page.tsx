@@ -11,6 +11,8 @@ type CameraProps = {
 };
 
 export default function Camera({ albumId, userId }: CameraProps) {
+    console.log("Camera albumId:", albumId);
+    console.log("Camera userId:", userId);
     const supabase = createClient();
     const videoRef = useRef<HTMLVideoElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
@@ -91,7 +93,7 @@ export default function Camera({ albumId, userId }: CameraProps) {
             async (blob) => {
                 if (!blob) return;
 
-                console.log("写真を撮影しました");
+                console.log("撮影");
                 console.log(blob);
 
                 const fileName = `${crypto.randomUUID()}.jpg`;
@@ -117,7 +119,6 @@ export default function Camera({ albumId, userId }: CameraProps) {
 
                 console.log("Storageへの保存に成功しました");
 
-
                 // 現在ログインしているユーザーを取得
                 const {
                     data: { user },
@@ -131,6 +132,12 @@ export default function Camera({ albumId, userId }: CameraProps) {
                 }
 
                 // photoテーブルに登録
+                console.log("photo登録データ:", {
+                    album_id: albumId,
+                    user_id: user.id,
+                    storage_path: storagePath,
+                });
+
                 const { error: dbError } =
                     await supabase
                         .from("photo")
@@ -143,7 +150,8 @@ export default function Camera({ albumId, userId }: CameraProps) {
                 if (dbError) {
                     console.error(
                         "photoテーブルへの登録に失敗しました:",
-                        dbError
+                        JSON.stringify(dbError, null, 2)
+                        // dbError
                     );
                     return;
                 }
