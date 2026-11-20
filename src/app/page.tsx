@@ -24,6 +24,9 @@ export default function Home() {
       <Link href="/album">
         <button>共有一覧</button>
       </Link>
+      <Link href="/camera">
+        <button>カメラ</button>
+      </Link>
     </main>
   );
 }
