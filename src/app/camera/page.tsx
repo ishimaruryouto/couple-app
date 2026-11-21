@@ -1,290 +1,368 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
-type Mode = "photo" | "video";
-type CameraFacing = "user" | "environment";
+export default function CameraPage() {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-type CameraProps = {
-    albumId: string;
-    userId: string;
-};
+    // カメラのStreamを保持する
+    const mediaStreamRef =
+        useRef<MediaStream | null>(null);
 
-export default function Camera({ albumId, userId }: CameraProps) {
-    console.log("Camera albumId:", albumId);
-    console.log("Camera userId:", userId);
-    const supabase = createClient();
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const chunksRef = useRef<Blob[]>([]);
+    const [photo, setPhoto] =
+        useState<string | null>(null);
 
-    const [cameraMode, setCameraMode] = useState<Mode>("photo");
-    const [cameraFacing, setCameraFacing] =
-        useState<CameraFacing>("environment");
-    const [isRecording, setIsRecording] = useState(false);
+    // 撮影した写真のサイズ
+    const [photoSize, setPhotoSize] = useState({
+        width: 0,
+        height: 0,
+    });
 
-    // カメラの起動・切り替え
+    const [error, setError] =
+        useState<string | null>(null);
+
+    // カメラを起動
     useEffect(() => {
-        let currentStream: MediaStream | null = null;
+        let isMounted = true;
 
-        const startCamera = async () => {
+        const initializeCamera = async () => {
             try {
-                // 現在のカメラを停止
-                if (streamRef.current) {
-                    streamRef.current.getTracks().forEach((track) => {
-                        track.stop();
-                    });
-                    streamRef.current = null;
-                }
-
-                const newStream =
+                setError(null);
+                const stream =
                     await navigator.mediaDevices.getUserMedia({
                         video: {
-                            facingMode: cameraFacing,
+                            facingMode: "user",
                         },
-                        audio: true,
+                        audio: false,
                     });
-                currentStream = newStream;
-                streamRef.current = newStream;
 
+                // コンポーネントがまだ存在している場合だけ処理
+                if (!isMounted) {
+                    stream
+                        .getTracks()
+                        .forEach((track) => {
+                            track.stop();
+                        });
+                    return;
+                }
+                // Streamを保存
+                mediaStreamRef.current = stream;
+                // videoにStreamを接続
                 if (videoRef.current) {
-                    videoRef.current.srcObject = newStream;
+                    videoRef.current.srcObject =
+                        stream;
+                    await videoRef.current.play();
+                    console.log(
+                        "カメラ映像を開始しました"
+                    );
                 }
             } catch (error) {
                 console.error(
                     "カメラの起動に失敗しました:",
                     error
                 );
+                if (isMounted) {
+                    setError(
+                        "カメラを起動できませんでした。"
+                    );
+                }
             }
         };
-        startCamera();
 
+        initializeCamera();
+
+        // ページを離れたらカメラ停止
         return () => {
-            if (currentStream) {
-                currentStream.getTracks().forEach((track) => {
-                    track.stop();
-                });
+            isMounted = false;
+            if (
+                mediaStreamRef.current
+            ) {
+                mediaStreamRef.current
+                    .getTracks()
+                    .forEach((track) => {
+                        track.stop();
+                    });
+                mediaStreamRef.current =
+                    null;
             }
         };
-    }, [cameraFacing]);
+    }, []);
 
-
-    // 写真撮影
+    // 撮影
     const takePhoto = () => {
-        const video = videoRef.current;
-        if (!video) return;
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext("2d");
+        const video =
+            videoRef.current;
+        const canvas =
+            canvasRef.current;
 
-        if (!context) return;
+        if (!video || !canvas) {
+            console.error(
+                "videoまたはcanvasが取得できません"
+            );
+            return;
+        }
 
+        // カメラ映像のサイズ
+        const width =
+            video.videoWidth;
+        const height =
+            video.videoHeight;
+        console.log(
+            "撮影時のvideoサイズ:",
+            {
+                width,
+                height,
+            }
+        );
+
+        // サイズが取得できない場合
+        if (
+            width === 0 ||
+            height === 0
+        ) {
+            console.error(
+                "カメラ映像のサイズを取得できません"
+            );
+            setError(
+                "カメラの準備が完了していません。もう一度試してください。"
+            );
+            return;
+        }
+
+        // canvasサイズ
+        canvas.width = width;
+        canvas.height = height;
+        const context =
+            canvas.getContext(
+                "2d"
+            );
+
+        if (!context) {
+            console.error(
+                "canvasのcontextを取得できません"
+            );
+
+            setError(
+                "写真の撮影に失敗しました。"
+            );
+
+            return;
+        }
+
+        // カメラ映像をcanvasへコピー
         context.drawImage(
             video,
             0,
             0,
-            canvas.width,
-            canvas.height
+            width,
+            height
         );
 
-        canvas.toBlob(
-            async (blob) => {
-                if (!blob) return;
+        // 画像データへ変換
+        const imageData =
+            canvas.toDataURL(
+                "image/jpeg",
+                0.9
+            );
 
-                console.log("撮影");
-                console.log(blob);
-
-                const fileName = `${crypto.randomUUID()}.jpg`;
-                const storagePath = `${albumId}/${fileName}`;
-
-                // Storageに保存
-                const { error: uploadError } =
-                    await supabase.storage
-                        .from("photo")
-                        .upload(storagePath, blob, {
-                            contentType: "image/jpeg",
-                            upsert: false,
-                        });
-
-                // Storageへの保存に失敗した場合
-                if (uploadError) {
-                    console.error(
-                        "写真のアップロードに失敗しました:",
-                        uploadError
-                    );
-                    return;
-                }
-
-                console.log("Storageへの保存に成功しました");
-
-                // 現在ログインしているユーザーを取得
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-
-                console.log("現在ログインしているユーザー:", user?.id);
-
-                if (!user) {
-                    console.error("ログインユーザーが取得できません");
-                    return;
-                }
-
-                // photoテーブルに登録
-                console.log("photo登録データ:", {
-                    album_id: albumId,
-                    user_id: user.id,
-                    storage_path: storagePath,
-                });
-
-                const { error: dbError } =
-                    await supabase
-                        .from("photo")
-                        .insert({
-                            album_id: albumId,
-                            user_id: user.id,
-                            storage_path: storagePath,
-                        });
-
-                if (dbError) {
-                    console.error(
-                        "photoテーブルへの登録に失敗しました:",
-                        JSON.stringify(dbError, null, 2)
-                        // dbError
-                    );
-                    return;
-                }
-
-                console.log("photoテーブルへの登録に成功しました");
-            },
-            "image/jpeg",
-            0.9
+        console.log(
+            "写真の生成に成功しました"
         );
+
+        // 写真を保存
+        setPhoto(
+            imageData
+        );
+
+        // サイズを保存
+        setPhotoSize({
+            width,
+            height,
+        });
     };
 
-
-    // 動画撮影開始
-    const startRecording = () => {
-        const stream = streamRef.current;
-
-        if (!stream) return;
-        chunksRef.current = [];
-        const recorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = recorder;
-        recorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                chunksRef.current.push(event.data);
-            }
-        };
-
-        recorder.onstop = () => {
-            const blob = new Blob(chunksRef.current, {
-                type: recorder.mimeType,
+    // 撮り直す
+    const retakePhoto =
+        async () => {
+            console.log(
+                "撮り直しを開始"
+            );
+            // 写真を消す
+            setPhoto(null);
+            // サイズをリセット
+            setPhotoSize({
+                width: 0,
+                height: 0,
             });
-            console.log("動画を撮影しました");
-            console.log(blob);
-            // ここでSupabase Storageへアップロード
+
+            // カメラを再接続
+            setTimeout(async () => {
+                try {
+                    // Streamが存在するか確認
+                    if (
+                        !mediaStreamRef.current
+                    ) {
+                        console.log(
+                            "Streamがないためカメラを再起動します"
+                        );
+                        return;
+                    }
+
+                    // videoにStreamを再設定
+                    if (
+                        videoRef.current
+                    ) {
+                        videoRef.current.srcObject =
+                            mediaStreamRef.current;
+
+                        await videoRef.current.play();
+
+                        console.log(
+                            "撮り直し用カメラを再表示しました"
+                        );
+
+                        console.log(
+                            "videoWidth:",
+                            videoRef.current
+                                .videoWidth
+                        );
+
+                        console.log(
+                            "videoHeight:",
+                            videoRef.current
+                                .videoHeight
+                        );
+                    }
+                } catch (error) {
+                    console.error(
+                        "カメラ再表示エラー:",
+                        error
+                    );
+
+                    setError(
+                        "カメラを再表示できませんでした。"
+                    );
+                }
+            }, 100);
         };
 
-        recorder.start();
-        setIsRecording(true);
-    };
+    // 保存
+    const savePhoto = () => {
+        console.log(
+            "保存する写真:",
+            photo
+        );
 
-    // 動画撮影停止
-    const stopRecording = () => {
-        if (!mediaRecorderRef.current) return;
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current = null;
-        setIsRecording(false);
-    };
-
-    // 撮影ボタン
-    const handleCapture = () => {
-        if (cameraMode === "photo") {
-            takePhoto();
-        } else {
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        }
-    };
-
-    // 内カメラ・外カメラ切り替え
-    const switchCamera = () => {
-        // 動画撮影中は切り替えない
-        if (isRecording) return;
-        setCameraFacing((prev) =>
-            prev === "environment"
-                ? "user"
-                : "environment"
+        alert(
+            "保存処理は次のステップで実装します。"
         );
     };
 
     return (
-        <>
-            <h1>カメラ</h1>
-            {/* カメラ映像 */}
-            <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
+        <main>
+            <h1>
+                カメラ
+            </h1>
+            {/* 撮影前 */}
+            {!photo ? (
+                <>
+                    <div>
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            onLoadedMetadata={() => {
+                                console.log(
+                                    "カメラ映像の準備完了"
+                                );
+
+                                console.log(
+                                    "videoWidth:",
+                                    videoRef
+                                        .current
+                                        ?.videoWidth
+                                );
+
+                                console.log(
+                                    "videoHeight:",
+                                    videoRef
+                                        .current
+                                        ?.videoHeight
+                                );
+                            }}
+                            style={{
+                                width:
+                                    "100%",
+                                maxWidth:
+                                    "200px",
+                            }}
+                        />
+                    </div>
+
+                    <button
+                        onClick={
+                            takePhoto
+                        }
+                    >
+                        📷 撮影する
+                    </button>
+                </>
+            ) : (
+                <>
+                    {/* 撮影した写真 */}
+                    <div>
+                        <Image
+                            src={photo}
+                            alt="撮影した写真"
+                            width={
+                                photoSize.width
+                            }
+                            height={
+                                photoSize.height
+                            }
+                            style={{
+                                width:
+                                    "100%",
+                                maxWidth:
+                                    "200px",
+                                height:
+                                    "auto",
+                            }}
+                        />
+                    </div>
+
+                    <div>
+                        <button
+                            onClick={
+                                retakePhoto
+                            }
+                        >
+                            撮り直す
+                        </button>
+
+                        <button
+                            onClick={
+                                savePhoto
+                            }
+                        >
+                            保存する
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* 撮影用canvas */}
+            <canvas
+                ref={
+                    canvasRef
+                }
                 style={{
-                    width: "100%",
-                    maxWidth: "200px",
+                    display:
+                        "none",
                 }}
             />
-
-            {/* 写真・動画切り替え */}
-            <div>
-                <button
-                    type="button"
-                    onClick={() => setCameraMode("photo")}
-                >
-                    写真
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setCameraMode("video")}
-                >
-                    動画
-                </button>
-            </div>
-
-            {/* 内カメラ・外カメラ切り替え */}
-            <div>
-                <button
-                    type="button"
-                    onClick={switchCamera}
-                    disabled={isRecording}
-                >
-                    {cameraFacing === "environment"
-                        ? "内カメラに切り替える"
-                        : "外カメラに切り替える"}
-                </button>
-            </div>
-
-            {/* 撮影ボタン */}
-            <div>
-                <button
-                    type="button"
-                    onClick={handleCapture}
-                >
-                    {cameraMode === "photo"
-                        ? "📷 写真を撮影"
-                        : isRecording
-                            ? "⏹ 録画停止"
-                            : "● 録画開始"}
-                </button>
-            </div>
-
-            <div>
-                {albumId}
-            </div>
-        </>
+        </main>
     );
 }
