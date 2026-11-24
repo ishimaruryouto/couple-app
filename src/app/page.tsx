@@ -27,6 +27,9 @@ export default function Home() {
       <Link href="/camera">
         <button>カメラ</button>
       </Link>
+      <Link href="/photos">
+        <button>写真フォルダ</button>
+      </Link>
     </main>
   );
 }
