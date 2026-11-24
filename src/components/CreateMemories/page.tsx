@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/supabase/client";
 
 type PostFormProps = {
     coupleId: string;
