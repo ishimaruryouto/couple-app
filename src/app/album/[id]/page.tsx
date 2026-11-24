@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/supabase/client";
 import CreateMemories from "@/components/CreateMemories/page";
 
 type Album = {
