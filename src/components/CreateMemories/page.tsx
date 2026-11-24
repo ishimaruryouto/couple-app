@@ -4,12 +4,14 @@ import { createClient } from "@/supabase/client";
 
 type PostFormProps = {
     coupleId: string;
+    albumId: string;
     userId: string;
     onPosted: () => Promise<void>;
 };
 
 export default function CreateMemories({
     coupleId,
+    albumId,
     userId,
     onPosted,
 }: PostFormProps) {
@@ -65,6 +67,7 @@ export default function CreateMemories({
                 .from("album_posts")
                 .insert({
                     couple_id: coupleId,
+                    album_id: albumId,
                     user_id: userId,
                     message: trimmedMessage,
                     image_path: imagePath,

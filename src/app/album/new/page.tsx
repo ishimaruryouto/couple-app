@@ -1,118 +1,124 @@
 "use client";
+
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/supabase/client";
 
 export default function NewAlbumPage() {
-    const [name, setName] = useState("ふたりの思い出");
-    const [message, setMessage] = useState("");
-    const [loading, setLoading] = useState(false);
-
     const router = useRouter();
+
+    const [albumName, setAlbumName] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setMessage("");
 
-        const albumName = name.trim();
+        const name = albumName.trim();
 
-        if (!albumName) {
-            setMessage("アルバム名を入力してください。");
+        if (!name) {
+            setErrorMessage("アルバム名を入力してください。");
             return;
         }
-        setLoading(true);
-        const supabase = createClient();
+
+        setSaving(true);
+        setErrorMessage("");
+
         try {
+            const supabase = createClient();
+
+            // ログインユーザーを取得
             const {
                 data: { user },
-                error: userError,
+                error: authError,
             } = await supabase.auth.getUser();
-            if (userError || !user) {
-                router.push("/login");
-                return;
+
+            if (authError || !user) {
+                throw new Error("ログインしてください。");
             }
 
-            // アルバムを作成し、作成者をメンバーに登録
-            const { data: albumId, error: createError } = await supabase.rpc(
-                "create_couple",
-                {
-                    p_name: albumName,
-                }
-            );
+            // 所属グループを取得
+            const { data: member, error: memberError } = await supabase
+                .from("couple_members")
+                .select("couple_id")
+                .eq("user_id", user.id)
+                .single();
 
-            if (createError) {
-                throw createError;
+            if (memberError || !member) {
+                throw new Error("カップルグループが見つかりません。");
             }
 
-            if (!albumId) {
-                throw new Error("アルバムIDを取得できませんでした");
+            // 新しいアルバムを作成
+            const { error: insertError } = await supabase
+                .from("albums")
+                .insert({
+                    couple_id: member.couple_id,
+                    name,
+                    created_by: user.id,
+                });
+
+            if (insertError) {
+                throw insertError;
             }
 
-            // 作成したアルバムの詳細ページへ移動
-            router.push(`/album/${albumId}`);
+            // アルバム一覧に戻る
+            router.push("/album");
             router.refresh();
 
-
         } catch (error: unknown) {
-            console.error(
-                "アルバム作成エラー:",
-                JSON.stringify(error, null, 2)
+            console.error("アルバム作成エラー:", error);
+
+            setErrorMessage(
+                error instanceof Error
+                    ? error.message
+                    : "アルバムの作成に失敗しました。"
             );
-
-            if (typeof error === "object" && error !== null) {
-                const detail = error as {
-                    message?: string;
-                    code?: string;
-                    details?: string;
-                    hint?: string;
-                };
-
-                const errorText = [
-                    detail.message,
-                    detail.code ? `コード: ${detail.code}` : "",
-                    detail.details ? `詳細: ${detail.details}` : "",
-                    detail.hint ? `ヒント: ${detail.hint}` : "",
-                ]
-                    .filter(Boolean)
-                    .join("\n");
-
-                setMessage(errorText || "アルバムの作成に失敗しました。");
-            } else {
-                setMessage(
-                    error instanceof Error
-                        ? error.message
-                        : "アルバムの作成に失敗しました。"
-                );
-            }
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     }
 
     return (
         <main>
-            <h1>共有アルバムを作成</h1>
+            <p>
+                <Link href="/album">
+                    ← アルバム一覧に戻る
+                </Link>
+            </p>
+
+            <h1>新しいアルバムを作成</h1>
+
             <form onSubmit={handleCreate}>
                 <div>
-                    <label htmlFor="albumName">アルバム名</label>
+                    <label htmlFor="album-name">
+                        アルバム名
+                    </label>
+
+                    <br />
+
                     <input
-                        id="albumName"
+                        id="album-name"
                         type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={albumName}
+                        onChange={(e) => setAlbumName(e.target.value)}
+                        placeholder="例：初デート、クリスマス、大阪旅行"
                         maxLength={100}
                         required
                     />
                 </div>
-                {message && <p role="alert">{message}</p>}
-                <button type="submit" disabled={loading}>
-                    {loading ? "作成中..." : "作成する"}
+
+                <button
+                    type="submit"
+                    disabled={saving}
+                >
+                    {saving ? "作成中..." : "アルバムを作成"}
                 </button>
             </form>
-            <p>
-                <Link href="/album">アルバム一覧に戻る</Link>
-            </p>
+
+            {errorMessage && (
+                <p role="alert">{errorMessage}</p>
+            )}
         </main>
     );
 }
