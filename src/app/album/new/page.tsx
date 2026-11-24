@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/supabase/client";
 
 export default function NewAlbumPage() {
     const [name, setName] = useState("ふたりの思い出");
