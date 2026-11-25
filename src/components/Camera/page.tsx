@@ -238,12 +238,8 @@ export default function Camera({ onPhotoTaken }: CameraCaptureProps) {
                         />
                     </div>
 
-                    <button
-                        onClick={
-                            takePhoto
-                        }
-                    >
-                        📷 撮影する
+                    <button onClick={takePhoto}>
+                        撮影
                     </button>
                 </>
             ) : (

@@ -14,16 +14,11 @@ export default function CameraPage() {
 
     return (
         <main>
-            <h1>
-                カメラ
-            </h1>
-
             <Camera
                 onPhotoTaken={
                     handlePhotoTaken
                 }
             />
-
             {photo && (
                 <PhotoSave
                     photo={
