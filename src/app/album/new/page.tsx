@@ -1,9 +1,9 @@
 "use client";
-
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
+import styles from "./page.module.css";
 
 export default function NewAlbumPage() {
     const router = useRouter();

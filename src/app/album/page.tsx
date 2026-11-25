@@ -1,8 +1,8 @@
 "use client";
-
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
+import styles from "./page.module.css";
 
 type Album = {
     id: string;

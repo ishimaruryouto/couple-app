@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
+import styles from "./page.module.css";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");

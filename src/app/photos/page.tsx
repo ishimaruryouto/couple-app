@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/supabase/client";
 import Account from "@/components/Account/page";
+import styles from "./page.module.css";
 
 type Photo = {
     id: string;

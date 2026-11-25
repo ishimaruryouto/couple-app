@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/supabase/client";
+import styles from "./page.module.css";
 
 export default function Account() {
     const [email, setEmail] = useState<string | null>(null);

@@ -1,5 +1,4 @@
 "use client";
-
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { calculateDistance } from "@/lib/location/calculateDistance";
 import { LOCATION_CONFIG } from "@/lib/location/locationConfig";

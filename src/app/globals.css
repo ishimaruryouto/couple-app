@@ -1,6 +1,18 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* -- 基本配色 -- */
+  --background: #171820; 
+  --foreground: #292832;
+  --mainColor : #C985A3;
+  --subColor  : #584252;
+  --accentColor: #D4AD79;
+  --textColor : #F5F1F3;
+
+  /* -- 文字サイズ -- */
+
+  /* -- 文字フォント -- */
+  /* --font-family:
+    -- 決まり次第設定 --
+  ; */
 }
 
 /* 全要素の余白をリセット */
@@ -13,8 +25,8 @@
 /* ページの基本設定 */
 html,
 body {
-  max-width: 100%;
-  min-height: 100%;
+  background: var(--background);
+  color: var(--textColor);
 }
 
 /* フォントの表示を調整 */
