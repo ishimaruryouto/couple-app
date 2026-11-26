@@ -1,0 +1,13 @@
+.newAlbum{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    right: 10px;
+    bottom: 14%;
+    width: 64px;
+    height: 64px;
+    background: var(--mainColor);
+    border-radius: 50%;
+    text-align: center;
+}

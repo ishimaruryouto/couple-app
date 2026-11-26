@@ -1,7 +1,7 @@
 "use client";
 import styles from "./page.module.css";
 import Link from "next/link";
-import Footer from "@/components/Footer.tsx/page";
+import Footer from "@/components/Footer/page";
 
 export default function Home() {
 
