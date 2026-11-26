@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/supabase/client";
-import CreateMemories from "@/components/CreateMemories/page";
 import Footer from "@/components/Footer/page";
 
 type Album = {
@@ -211,18 +210,6 @@ export default function AlbumDetailPage() {
                             <h1>{album.name}</h1>
 
                             <hr />
-
-                            {userId && (
-                                <CreateMemories
-                                    coupleId={album.couple_id}
-                                    albumId={album.id}
-                                    userId={userId}
-                                    onPosted={loadPosts}
-                                />
-                            )}
-
-                            <hr />
-
                             <section>
                                 <h2>ふたりの思い出</h2>
 

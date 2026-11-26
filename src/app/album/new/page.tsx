@@ -1,83 +1,111 @@
 "use client";
+
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
-import styles from "./page.module.css";
+import CreateMemories from "@/components/CreateMemories/page";
+
+type Album = {
+    id: string;
+    name: string;
+    couple_id: string;
+};
 
 export default function NewAlbumPage() {
     const router = useRouter();
 
-    const [albumName, setAlbumName] = useState("");
-    const [saving, setSaving] = useState(false);
+    const [albums, setAlbums] = useState<Album[]>([]);
+    const [selectedAlbumId, setSelectedAlbumId] = useState("");
+    const [userId, setUserId] = useState<string | null>(null);
+
+    const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
 
-    async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
+    // アルバム一覧を取得
+    useEffect(() => {
+        let cancelled = false;
 
-        const name = albumName.trim();
-
-        if (!name) {
-            setErrorMessage("アルバム名を入力してください。");
-            return;
-        }
-
-        setSaving(true);
-        setErrorMessage("");
-
-        try {
+        async function loadAlbums() {
             const supabase = createClient();
 
-            // ログインユーザーを取得
-            const {
-                data: { user },
-                error: authError,
-            } = await supabase.auth.getUser();
+            try {
+                // ログインユーザーを取得
+                const {
+                    data: { user },
+                    error: authError,
+                } = await supabase.auth.getUser();
 
-            if (authError || !user) {
-                throw new Error("ログインしてください。");
+                if (authError || !user) {
+                    throw new Error("ログインしてください。");
+                }
+
+                // 所属しているカップルを取得
+                const { data: members, error: memberError } =
+                    await supabase
+                        .from("couple_members")
+                        .select("couple_id")
+                        .eq("user_id", user.id);
+
+                if (memberError) {
+                    throw memberError;
+                }
+
+                const coupleIds = (members ?? []).map(
+                    (member) => member.couple_id
+                );
+
+                if (coupleIds.length === 0) {
+                    throw new Error(
+                        "カップルグループが見つかりません。"
+                    );
+                }
+
+                // カップルに紐づくアルバム一覧を取得
+                const { data: albumData, error: albumError } =
+                    await supabase
+                        .from("albums")
+                        .select("id, name, couple_id")
+                        .in("couple_id", coupleIds)
+                        .order("created_at", { ascending: false });
+
+                if (albumError) {
+                    throw albumError;
+                }
+
+                if (cancelled) return;
+
+                setUserId(user.id);
+                setAlbums(albumData ?? []);
+
+            } catch (error: unknown) {
+                if (cancelled) return;
+
+                console.error("アルバム取得エラー:", error);
+
+                setErrorMessage(
+                    error instanceof Error
+                        ? error.message
+                        : "アルバムの取得に失敗しました。"
+                );
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
-
-            // 所属グループを取得
-            const { data: member, error: memberError } = await supabase
-                .from("couple_members")
-                .select("couple_id")
-                .eq("user_id", user.id)
-                .single();
-
-            if (memberError || !member) {
-                throw new Error("カップルグループが見つかりません。");
-            }
-
-            // 新しいアルバムを作成
-            const { error: insertError } = await supabase
-                .from("albums")
-                .insert({
-                    couple_id: member.couple_id,
-                    name,
-                    created_by: user.id,
-                });
-
-            if (insertError) {
-                throw insertError;
-            }
-
-            // アルバム一覧に戻る
-            router.push("/album");
-            router.refresh();
-
-        } catch (error: unknown) {
-            console.error("アルバム作成エラー:", error);
-
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "アルバムの作成に失敗しました。"
-            );
-        } finally {
-            setSaving(false);
         }
-    }
+
+        void loadAlbums();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // 選択したアルバムを取得
+    const selectedAlbum = albums.find(
+        (album) => album.id === selectedAlbumId
+    );
 
     return (
         <main>
@@ -87,37 +115,69 @@ export default function NewAlbumPage() {
                 </Link>
             </p>
 
-            <h1>新しいアルバムを作成</h1>
+            <h1>思い出を投稿</h1>
 
-            <form onSubmit={handleCreate}>
-                <div>
-                    <label htmlFor="album-name">
-                        アルバム名
-                    </label>
+            {loading ? (
+                <p>読み込み中...</p>
+            ) : (
+                <>
+                    {errorMessage && (
+                        <p role="alert">{errorMessage}</p>
+                    )}
 
-                    <br />
+                    {!errorMessage && (
+                        <>
+                            <div>
+                                <label htmlFor="album-select">
+                                    投稿先のアルバム
+                                </label>
 
-                    <input
-                        id="album-name"
-                        type="text"
-                        value={albumName}
-                        onChange={(e) => setAlbumName(e.target.value)}
-                        placeholder="例：初デート、クリスマス、大阪旅行"
-                        maxLength={100}
-                        required
-                    />
-                </div>
+                                <br />
 
-                <button
-                    type="submit"
-                    disabled={saving}
-                >
-                    {saving ? "作成中..." : "アルバムを作成"}
-                </button>
-            </form>
+                                <select
+                                    id="album-select"
+                                    value={selectedAlbumId}
+                                    onChange={(e) =>
+                                        setSelectedAlbumId(e.target.value)
+                                    }
+                                >
+                                    <option value="">
+                                        アルバムを選択してください
+                                    </option>
 
-            {errorMessage && (
-                <p role="alert">{errorMessage}</p>
+                                    {albums.map((album) => (
+                                        <option
+                                            key={album.id}
+                                            value={album.id}
+                                        >
+                                            {album.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {albums.length === 0 && (
+                                <p>
+                                    投稿できるアルバムがありません。
+                                </p>
+                            )}
+
+                            {selectedAlbum && userId && (
+                                <CreateMemories
+                                    key={selectedAlbum.id}
+                                    coupleId={selectedAlbum.couple_id}
+                                    albumId={selectedAlbum.id}
+                                    userId={userId}
+                                    onPosted={async () => {
+                                        router.push(
+                                            `/album/${selectedAlbum.id}`
+                                        );
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+                </>
             )}
         </main>
     );
