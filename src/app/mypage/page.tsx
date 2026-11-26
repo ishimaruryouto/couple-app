@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Account from "@/components/Account/page";
-import Footer from "@/components/Footer.tsx/page";
+import Footer from "@/components/Footer/page";
 
 export default function Mypage() {
     const router = useRouter();
