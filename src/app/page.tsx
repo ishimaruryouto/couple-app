@@ -3,6 +3,7 @@ import styles from "./page.module.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Account from "@/components/Account/page";
+import Footer from "@/components/Footer.tsx/page";
 
 export default function Home() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function Home() {
       <Link href="/photos">
         <button>写真フォルダ</button>
       </Link>
+      <Footer />
     </main>
   );
 }
