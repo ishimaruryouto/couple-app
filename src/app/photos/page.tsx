@@ -4,6 +4,7 @@ import Image from "next/image";
 import { createClient } from "@/supabase/client";
 import Account from "@/components/Account/page";
 import styles from "./page.module.css";
+import Footer from "@/components/Footer.tsx/page";
 
 type Photo = {
     id: string;
@@ -142,6 +143,8 @@ export default function PhotosPage() {
                         })}
                     </div>
                 )}
+            <Footer />
+
         </main>
     );
 }

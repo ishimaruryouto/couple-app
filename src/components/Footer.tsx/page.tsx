@@ -23,7 +23,7 @@ export default function Footer() {
                 />
                 <p>Album</p>
             </Link>
-            <Link href="/">
+            <Link href="/mypage">
                 <Image
                     src="mypage_btn.svg"
                     alt=""
