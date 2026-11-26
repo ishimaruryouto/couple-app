@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
 import styles from "./page.module.css";
-import Footer from "@/components/Footer.tsx/page";
+import Footer from "@/components/Footer/page";
 
 type Album = {
     id: string;
@@ -74,9 +75,8 @@ export default function AlbumPage() {
 
     return (
         <main>
-            <h1>ふたりのアルバム</h1>
+            <h1></h1>
             <hr />
-
             {loading ? (
                 <p>アルバムを読み込み中...</p>
             ) : (
@@ -97,14 +97,6 @@ export default function AlbumPage() {
                     {hasCouple && (
                         <>
                             <section>
-                                <Link href="/album/new">
-                                    ＋ 新しいアルバムを作成
-                                </Link>
-                            </section>
-
-                            <section>
-                                <h2>アルバム一覧</h2>
-
                                 {albums.length === 0 ? (
                                     <p>
                                         まだアルバムがありません。
@@ -124,6 +116,14 @@ export default function AlbumPage() {
                             </section>
                         </>
                     )}
+                    <Link href="/album/new" className={styles.newAlbum}>
+                        <Image
+                            src="newIcon.svg"
+                            alt=""
+                            width={37}
+                            height={42}
+                        />
+                    </Link>
                 </>
             )}
             <Footer />

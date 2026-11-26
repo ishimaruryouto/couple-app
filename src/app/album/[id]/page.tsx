@@ -1,11 +1,11 @@
 "use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/supabase/client";
 import CreateMemories from "@/components/CreateMemories/page";
+import Footer from "@/components/Footer/page";
 
 type Album = {
     id: string;
@@ -138,12 +138,6 @@ export default function AlbumDetailPage() {
 
     return (
         <main>
-            <p>
-                <Link href="/album">
-                    ← アルバム一覧に戻る
-                </Link>
-            </p>
-
             {loading ? (
                 <p>アルバムを読み込み中...</p>
             ) : (
@@ -235,6 +229,7 @@ export default function AlbumDetailPage() {
             )}
 
             {message && <p role="status">{message}</p>}
+            <Footer />
         </main>
     );
 }
