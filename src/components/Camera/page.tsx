@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState, } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
+import PhotoSave from "../PhotoSave/page";
+import Link from "next/link";
 
 type CameraCaptureProps = {
     onPhotoTaken: (
@@ -9,9 +11,10 @@ type CameraCaptureProps = {
         width: number,
         height: number
     ) => void;
+    onRetake: () => void;
 };
 
-export default function Camera({ onPhotoTaken }: CameraCaptureProps) {
+export default function Camera({ onPhotoTaken, onRetake }: CameraCaptureProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -143,7 +146,6 @@ export default function Camera({ onPhotoTaken }: CameraCaptureProps) {
                 "image/jpeg",
                 0.9
             );
-        console.log("写真の生成に成功");
         setPhoto(
             imageData
         );
@@ -164,13 +166,14 @@ export default function Camera({ onPhotoTaken }: CameraCaptureProps) {
     // 撮り直す
     const retakePhoto =
         async () => {
-            console.log("撮り直し");
             setPhoto(null);
             setPhotoSize({
                 width: 0,
                 height: 0,
             });
             setError(null);
+            onRetake();
+
             setTimeout(
                 async () => {
                     try {
@@ -211,77 +214,41 @@ export default function Camera({ onPhotoTaken }: CameraCaptureProps) {
             {!photo ? (
                 <>
                     <div>
+                        <Link href="/" className={styles.back}>
+                            <p>＜</p>
+                        </Link>
                         <video
-                            ref={
-                                videoRef
-                            }
+                            className={styles.camera}
+                            ref={videoRef}
                             autoPlay
                             playsInline
                             muted
-                            onLoadedMetadata={() => {
-                                console.log("カメラ映像の準備完了");
-                                console.log(
-                                    "videoWidth:",
-                                    videoRef.current
-                                        ?.videoWidth
-                                );
-
-                                console.log(
-                                    "videoHeight:",
-                                    videoRef.current
-                                        ?.videoHeight
-                                );
-                            }}
-                            style={{
-                                width: "100%",
-                                maxWidth: "200px",
-                            }}
                         />
                     </div>
-
-                    <button onClick={takePhoto}>
-                        撮影
-                    </button>
+                    <div>
+                    </div>
+                    <button onClick={takePhoto} className={styles.filming} />
                 </>
             ) : (
                 <>
                     <div>
                         <Image
-                            src={
-                                photo
-                            }
+                            src={photo}
                             alt="撮影した写真"
-                            width={
-                                photoSize.width
-                            }
-                            height={
-                                photoSize.height
-                            }
-                            style={{
-                                width:
-                                    "100%",
-                                maxWidth:
-                                    "200px",
-                                height:
-                                    "auto",
-                            }}
+                            width={photoSize.width}
+                            height={photoSize.height}
+                            className={styles.savePhoto}
                         />
                     </div>
 
-                    <button
-                        onClick={
-                            retakePhoto
-                        }
-                    >
+                    <button onClick={retakePhoto}>
                         撮り直す
                     </button>
                 </>
             )}
 
             <canvas
-                ref={
-                    canvasRef
-                }
+                ref={canvasRef}
                 style={{
                     display:
                         "none",

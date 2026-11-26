@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
 import styles from "./page.module.css";
+import Footer from "@/components/Footer.tsx/page";
 
 type Album = {
     id: string;
@@ -125,6 +126,7 @@ export default function AlbumPage() {
                     )}
                 </>
             )}
+            <Footer />
         </main>
     );
 }

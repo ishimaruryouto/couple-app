@@ -15,9 +15,8 @@ export default function CameraPage() {
     return (
         <main>
             <Camera
-                onPhotoTaken={
-                    handlePhotoTaken
-                }
+                onPhotoTaken={handlePhotoTaken}
+                onRetake={() => setPhoto(null)}
             />
             {photo && (
                 <PhotoSave
