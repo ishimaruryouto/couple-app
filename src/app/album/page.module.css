@@ -1,4 +1,13 @@
-.newAlbum{
+.wrap {
+    display: flex;
+    flex-direction: column;
+
+    min-height: 100dvh;
+    background: #292832;
+    color: #fff;
+}
+
+.newAlbum {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,4 +19,23 @@
     background: var(--mainColor);
     border-radius: 50%;
     text-align: center;
+}
+
+.postArea {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.postArea>section {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.postArea form {
+    flex: 1;
+    min-height: 0;
 }

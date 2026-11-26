@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
 import CreateMemories from "@/components/CreateMemories/page";
+import styles from "./page.module.css";
 
 type Album = {
     id: string;
@@ -108,14 +109,40 @@ export default function NewAlbumPage() {
     );
 
     return (
-        <main>
-            <p>
-                <Link href="/album">
-                    ← アルバム一覧に戻る
-                </Link>
-            </p>
+        <main className={styles.wrap}>
 
-            <h1>思い出を投稿</h1>
+            <header className={styles.header}>
+                {/* 戻るボタン */}
+                <Link href="/album" className={styles.closeBtn}>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path
+                            d="M20 20L4 4M20 4L4 20"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            stroke="white"
+                        />
+                    </svg>
+                </Link>
+
+                {/* 日付 */}
+                <p className={styles.date}>11/27</p>
+
+                {/* 保存ボタン */}
+                <button
+                    type="submit"
+                    form="memory-form"
+                    className={styles.saveBtn}
+                    disabled={!selectedAlbum || !userId || loading}
+                >
+                    保存
+                </button>
+            </header>
 
             {loading ? (
                 <p>読み込み中...</p>
@@ -163,17 +190,17 @@ export default function NewAlbumPage() {
                             )}
 
                             {selectedAlbum && userId && (
-                                <CreateMemories
-                                    key={selectedAlbum.id}
-                                    coupleId={selectedAlbum.couple_id}
-                                    albumId={selectedAlbum.id}
-                                    userId={userId}
-                                    onPosted={async () => {
-                                        router.push(
-                                            `/album/${selectedAlbum.id}`
-                                        );
-                                    }}
-                                />
+                                <div className={styles.postArea}>
+                                    <CreateMemories
+                                        key={selectedAlbum.id}
+                                        coupleId={selectedAlbum.couple_id}
+                                        albumId={selectedAlbum.id}
+                                        userId={userId}
+                                        onPosted={async () => {
+                                            router.push(`/album/${selectedAlbum.id}`);
+                                        }}
+                                    />
+                                </div>
                             )}
                         </>
                     )}

@@ -1,0 +1,98 @@
+/* ==========================
+   画面全体
+========================== */
+.wrap {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+
+    background: #292832;
+    color: #fff;
+    overflow: hidden;
+}
+
+/* ==========================
+   ヘッダー
+========================== */
+.header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+
+    width: 100%;
+    padding: 104px 16px 30px;
+    flex-shrink: 0;
+}
+
+/* 戻るボタン */
+.closeBtn {
+    display: flex;
+    align-items: center;
+    justify-self: start;
+}
+
+/* 日付 */
+.date {
+    justify-self: center;
+    margin: 0;
+
+    font-size: 20px;
+    font-weight: 600;
+    font-style: italic;
+}
+
+/* 保存ボタン */
+.saveBtn {
+    justify-self: end;
+
+    padding: 8px 16px;
+
+    color: #fff;
+    background: #171820;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.saveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==========================
+   投稿エリア
+========================== */
+.postArea {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+/* CreateMemoriesのsection */
+.postArea>section {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+/* CreateMemoriesのform */
+.postArea form {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}

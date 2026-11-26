@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createClient } from "@/supabase/client";
 import Image from "next/image";
 import PhotoSelectModal from "@/components/PhotoSelectModal/PhotoSelectModal";
+import styles from "./page.module.css";
 
 type Photo = {
     id: string;
@@ -99,10 +100,10 @@ export default function CreateMemories({
 
     return (
         <section>
-            <h2>思い出を投稿</h2>
-            <form onSubmit={handlePost}>
-                <div>
-                    <label htmlFor="post-message">メッセージ</label>
+            {/* <h2>思い出を投稿</h2> */}
+            <form id="memory-form" onSubmit={handlePost}>
+                <div className={styles.messageWrap}>
+                    {/* <label htmlFor="post-message">メッセージ</label> */}
                     <br />
                     <textarea
                         id="post-message"
@@ -114,21 +115,7 @@ export default function CreateMemories({
                     />
                 </div>
 
-                {/* <div>
-                    <label htmlFor="post-photo">写真（5MB以下）</label>
-                    <br />
-                    <input
-                        id="post-photo"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                            setSelectedFile(e.target.files?.[0] ?? null)
-                        }
-                    />
-                </div> */}
-                <div>
-                    <p>写真を追加</p>
-
+                <div className={styles.btnWrap}>
                     <button
                         type="button"
                         onClick={() => {
@@ -136,7 +123,9 @@ export default function CreateMemories({
                         }}
                         disabled={saving}
                     >
-                        ＋ 写真を選択
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 20L4 4M20 4L4 20" stroke-width="3" stroke-linecap="round" stroke="white" />
+                        </svg>
                     </button>
                 </div>
                 {selectedPhotos.length > 0 && (
@@ -180,9 +169,6 @@ export default function CreateMemories({
                 {selectedFile && (
                     <p>選択中：{selectedFile.name}</p>
                 )}
-                <button type="submit" disabled={saving}>
-                    {saving ? "投稿中..." : "思い出を投稿する"}
-                </button>
             </form>
 
             {status && <p role="status">{status}</p>}
