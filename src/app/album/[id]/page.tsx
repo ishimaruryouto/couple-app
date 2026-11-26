@@ -23,6 +23,7 @@ type AlbumPost = {
 
 type DisplayPost = AlbumPost & {
     imageUrl: string | null;
+    photoUrls: string[];
 };
 
 export default function AlbumDetailPage() {
@@ -35,10 +36,10 @@ export default function AlbumDetailPage() {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState("");
 
-    // アルバム内の投稿を取得
     const loadPosts = useCallback(async () => {
         const supabase = createClient();
 
+        // ① アルバム内の投稿を取得
         const { data, error } = await supabase
             .from("album_posts")
             .select("id, user_id, message, image_path, created_at")
@@ -51,10 +52,13 @@ export default function AlbumDetailPage() {
             return;
         }
 
+        // ② 各投稿に紐づく写真を取得
         const displayPosts: DisplayPost[] = await Promise.all(
             (data ?? []).map(async (post) => {
                 let imageUrl: string | null = null;
+                const photoUrls: string[] = [];
 
+                // 以前の投稿（album-photos）に対応
                 if (post.image_path) {
                     const { data: signedData, error: signedError } =
                         await supabase.storage
@@ -63,7 +67,7 @@ export default function AlbumDetailPage() {
 
                     if (signedError) {
                         console.error(
-                            "写真URL取得エラー:",
+                            "旧写真URL取得エラー:",
                             signedError.message
                         );
                     } else {
@@ -71,7 +75,67 @@ export default function AlbumDetailPage() {
                     }
                 }
 
-                return { ...post, imageUrl };
+                // 新しい投稿に紐づく写真IDを取得
+                const { data: postPhotos, error: postPhotosError } =
+                    await supabase
+                        .from("album_post_photos")
+                        .select("photo_id, sort_order")
+                        .eq("post_id", post.id)
+                        .order("sort_order", { ascending: true });
+
+                if (postPhotosError) {
+                    console.error(
+                        "投稿写真取得エラー:",
+                        postPhotosError.message
+                    );
+                }
+
+                if (postPhotos && postPhotos.length > 0) {
+                    const photoIds = postPhotos.map(
+                        (item) => item.photo_id
+                    );
+
+                    // photoテーブルから保存先を取得
+                    const { data: photos, error: photosError } =
+                        await supabase
+                            .from("photo")
+                            .select("id, storage_path")
+                            .in("id", photoIds);
+
+                    if (photosError) {
+                        console.error(
+                            "写真情報取得エラー:",
+                            photosError.message
+                        );
+                    }
+
+                    // 写真IDと保存先を対応させる
+                    const photoMap = new Map(
+                        (photos ?? []).map((photo) => [
+                            photo.id,
+                            photo.storage_path,
+                        ])
+                    );
+
+                    // 選択した順番でURLを作成
+                    for (const item of postPhotos) {
+                        const storagePath = photoMap.get(item.photo_id);
+
+                        if (!storagePath) continue;
+
+                        const { data: urlData } = supabase.storage
+                            .from("photos")
+                            .getPublicUrl(storagePath);
+
+                        photoUrls.push(urlData.publicUrl);
+                    }
+                }
+
+                return {
+                    ...post,
+                    imageUrl,
+                    photoUrls,
+                };
             })
         );
 
@@ -208,6 +272,35 @@ export default function AlbumDetailPage() {
                                                             borderRadius: "8px",
                                                         }}
                                                     />
+                                                )}
+
+                                                {post.photoUrls.length > 0 && (
+                                                    <div
+                                                        style={{
+                                                            display: "grid",
+                                                            gridTemplateColumns: "repeat(3, 1fr)",
+                                                            gap: "10px",
+                                                            maxWidth: "600px",
+                                                            marginTop: "10px",
+                                                        }}
+                                                    >
+                                                        {post.photoUrls.map((url, index) => (
+                                                            <Image
+                                                                key={`${post.id}-${index}`}
+                                                                src={url}
+                                                                alt={`アルバムの写真 ${index + 1}`}
+                                                                width={200}
+                                                                height={200}
+                                                                unoptimized
+                                                                style={{
+                                                                    width: "100%",
+                                                                    aspectRatio: "1 / 1",
+                                                                    objectFit: "cover",
+                                                                    borderRadius: "8px",
+                                                                }}
+                                                            />
+                                                        ))}
+                                                    </div>
                                                 )}
 
                                                 <p>
