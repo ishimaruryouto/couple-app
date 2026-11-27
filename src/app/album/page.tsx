@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
 import styles from "./page.module.css";
 import Footer from "@/components/Footer/page";
+import CreateAlbum from "@/components/CreateAlbum/page";
 
 type Album = {
     id: string;
@@ -17,6 +18,13 @@ export default function AlbumPage() {
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
     const [hasCouple, setHasCouple] = useState(false);
+    // 新しく作成したアルバムを一覧に追加
+    function handleAlbumCreated(newAlbum: Album) {
+        setAlbums((prevAlbums) => [
+            newAlbum,
+            ...prevAlbums,
+        ]);
+    }
 
     useEffect(() => {
         const supabase = createClient();
@@ -93,6 +101,8 @@ export default function AlbumPage() {
                             </Link>
                         </section>
                     )}
+
+                    <CreateAlbum onCreated={handleAlbumCreated} />
 
                     {hasCouple && (
                         <>

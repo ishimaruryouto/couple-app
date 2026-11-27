@@ -1,0 +1,63 @@
+.createAlbum {
+    width: 100%;
+    padding: 20px 16px;
+    color: #fff;
+}
+
+.createAlbum h2 {
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.createAlbum form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.createAlbum input {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+
+    color: #fff;
+    background: #171820;
+
+    border: 1px solid #55545e;
+    border-radius: 8px;
+
+    font-size: 16px;
+    outline: none;
+}
+
+.createAlbum input:focus {
+    border-color: var(--mainColor);
+}
+
+.createAlbum button {
+    height: 44px;
+    padding: 0 20px;
+
+    color: #fff;
+    background: var(--mainColor);
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.createAlbum button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.createAlbum p {
+    margin-top: 10px;
+    color: #ff8f8f;
+    font-size: 13px;
+}
